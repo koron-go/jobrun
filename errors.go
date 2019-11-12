@@ -75,3 +75,12 @@ func (e *ErrorParallel) As(v interface{}) bool {
 	}
 	return false
 }
+
+// Errors returns all wrapped errors in array.
+func (e *ErrorParallel) Errors() []error {
+	errs := make([]error, len(e.errs))
+	for i, pe := range e.errs {
+		errs[i] = pe
+	}
+	return errs
+}
