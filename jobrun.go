@@ -10,6 +10,14 @@ type Runner interface {
 	Run(ctx context.Context) error
 }
 
+// RunFunc is Runner wrapper for function.
+type RunFunc func(ctx context.Context) error
+
+// Run implements Runner interface.
+func (f RunFunc) Run(ctx context.Context) error {
+	return f(ctx)
+}
+
 // Serial defines serial job runner.
 type Serial []Runner
 
