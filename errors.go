@@ -17,7 +17,7 @@ type parallelError struct {
 }
 
 func (pe parallelError) Error() string {
-	return fmt.Sprintf("parallel job #%d failed: %s", pe.err)
+	return fmt.Sprintf("parallel job #%d failed: %s", pe.n, pe.err)
 }
 
 func (pe parallelError) Unwrap() error {
