@@ -58,3 +58,85 @@ func TestParallelErrors_As(t *testing.T) {
 		t.Fatalf("unexpected: got=%#v", xerr)
 	}
 }
+
+func TestErrorArray(t *testing.T) {
+	err1 := errors.New("hello")
+	err2 := errors.New("world")
+	eaA := errorArray{err1, err2}
+	eaB := errorArray{err2, err1}
+	eaC := errorArray{parallelError{err: io.EOF}, err2}
+
+	t.Run("Error", func(t *testing.T) {
+		if s := eaA.Error(); s != "hello" {
+			t.Fatalf("unexpected eaA.Error: got=%s", s)
+		}
+		if s := eaB.Error(); s != "world" {
+			t.Fatalf("unexpected eaB.Error: got=%s", s)
+		}
+	})
+
+	t.Run("Unwrap", func(t *testing.T) {
+		if x := errors.Unwrap(eaA); x != nil {
+			t.Fatalf("unexpected eaA.Unwrap: got=%s", x)
+		}
+		if x := errors.Unwrap(eaB); x != nil {
+			t.Fatalf("unexpected eaB.Unwrap: got=%s", x)
+		}
+		if x := errors.Unwrap(eaC); x != io.EOF {
+			t.Fatalf("unexpected eaC.Unwrap: got=%s", x)
+		}
+	})
+
+	t.Run("Is", func(t *testing.T) {
+		for i, tc := range []struct {
+			ea  errorArray
+			err error
+			exp bool
+		}{
+			{eaA, err1, true},
+			{eaA, err2, true},
+			{eaA, io.EOF, false},
+			{eaC, err1, false},
+			{eaC, err2, true},
+			{eaC, io.EOF, true},
+		} {
+			act := errors.Is(tc.ea, tc.err)
+			if act != tc.exp {
+				t.Fatalf("unexpected errors.Is: #%d want=%t got=%t",
+					i, tc.exp, act)
+			}
+		}
+	})
+
+	t.Run("As", func(t *testing.T) {
+		err3 := &os.PathError{Op: "dummyOp", Path: "dummyPath", Err: io.EOF}
+		ea := errorArray{io.EOF, err3}
+		var xerr *os.PathError
+		if !errors.As(ea, &xerr) {
+			t.Fatal("errors.As(os.PathError) failed")
+		}
+		if !reflect.DeepEqual(xerr, err3) {
+			t.Fatalf("unexpected: got=%#v", xerr)
+		}
+		// not found case
+		var xerr2 *os.PathError
+		if errors.As(eaA, &xerr2) {
+			t.Fatalf("unexpected errors.As succeed: %s", xerr2)
+		}
+	})
+
+	t.Run("Errors", func(t *testing.T) {
+		for i, tc := range []struct {
+			ea  errorArray
+			exp []error
+		}{
+			{eaA, []error{err1, err2}},
+		} {
+			act := tc.ea.Errors()
+			if !reflect.DeepEqual(tc.exp, act) {
+				t.Fatalf("unexpected Errors() #%d: want=%+v got=%+v",
+					i, tc.exp, act)
+			}
+		}
+	})
+}
