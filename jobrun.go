@@ -2,6 +2,7 @@ package jobrun
 
 import (
 	"context"
+	"errors"
 	"sync"
 )
 
@@ -48,27 +49,33 @@ func (p *Parallel) Add(r ...Runner) *Parallel {
 }
 
 // Run implements Runner.
-func (p Parallel) Run(ctx0 context.Context) error {
-	ctx, cancel := context.WithCancel(ctx0)
+func (p Parallel) Run(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	errs := &ErrorParallel{}
+	var mu sync.Mutex
+	errs := make(errorArray, 0, len(p))
 
 	var wg sync.WaitGroup
 	wg.Add(len(p))
-	for i0, r0 := range p {
-		go func(i int, r Runner) {
+	for i, job := range p {
+		go func(n int, r Runner) {
 			defer wg.Done()
 			err := r.Run(ctx)
 			if err != nil {
-				errs.add(i, err)
+				if errors.Is(err, context.Canceled) {
+					return
+				}
+				mu.Lock()
+				errs = append(errs, parallelError{n: n, err: err})
+				mu.Unlock()
 				cancel()
 			}
-		}(i0, r0)
+		}(i, job)
 	}
 	wg.Wait()
 
-	if len(errs.errs) > 0 {
+	if len(errs) > 0 {
 		return errs
 	}
 	return nil

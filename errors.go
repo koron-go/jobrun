@@ -1,10 +1,8 @@
 package jobrun
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"sync"
 )
 
 func serialError(n int, err error) error {
@@ -32,34 +30,21 @@ func (pe parallelError) As(v interface{}) bool {
 	return errors.As(pe.err, v)
 }
 
-// ErrorParallel is set of errors which occur in parallel.
-type ErrorParallel struct {
-	mu   sync.Mutex
-	errs []parallelError
-}
+type errorArray []error
 
-func (e *ErrorParallel) add(n int, err error) {
-	if errors.Is(err, context.Canceled) {
-		return
-	}
-	e.mu.Lock()
-	e.errs = append(e.errs, parallelError{n: n, err: err})
-	e.mu.Unlock()
-}
-
-func (e *ErrorParallel) Error() string {
-	return e.errs[0].Error()
+func (ea errorArray) Error() string {
+	return ea[0].Error()
 }
 
 // Unwrap is provided for errors.Unwrap
-func (e *ErrorParallel) Unwrap() error {
-	return e.errs[0]
+func (ea errorArray) Unwrap() error {
+	return errors.Unwrap(ea[0])
 }
 
 // Is is provided for errors.Is
-func (e *ErrorParallel) Is(err error) bool {
-	for _, pe := range e.errs {
-		if ok := pe.Is(err); ok {
+func (ea errorArray) Is(err error) bool {
+	for _, e := range ea {
+		if ok := errors.Is(e, err); ok {
 			return true
 		}
 	}
@@ -67,9 +52,9 @@ func (e *ErrorParallel) Is(err error) bool {
 }
 
 // As is provided for errors.As
-func (e *ErrorParallel) As(v interface{}) bool {
-	for _, pe := range e.errs {
-		if ok := pe.As(v); ok {
+func (ea errorArray) As(v interface{}) bool {
+	for _, e := range ea {
+		if ok := errors.As(e, v); ok {
 			return true
 		}
 	}
@@ -77,10 +62,6 @@ func (e *ErrorParallel) As(v interface{}) bool {
 }
 
 // Errors returns all wrapped errors in array.
-func (e *ErrorParallel) Errors() []error {
-	errs := make([]error, len(e.errs))
-	for i, pe := range e.errs {
-		errs[i] = pe
-	}
-	return errs
+func (ea errorArray) Errors() []error {
+	return []error(ea)
 }
