@@ -35,6 +35,9 @@ func (s Serial) Run(ctx context.Context) error {
 		if err != nil {
 			return serialError(i, err)
 		}
+		if err := ctx.Err(); err != nil {
+			return serialError(i, err)
+		}
 	}
 	return nil
 }
@@ -78,5 +81,9 @@ func (p Parallel) Run(ctx context.Context) error {
 	if len(errs) > 0 {
 		return errs
 	}
+	if err := ctx.Err(); err == context.Canceled {
+		return err
+	}
+
 	return nil
 }
