@@ -167,7 +167,7 @@ func TestParallel_cancel(t *testing.T) {
 			time.Sleep(time.Millisecond)
 		}
 		atomic.StoreInt32(&state1, 2)
-		ti := time.After(500*time.Millisecond)
+		ti := time.After(500 * time.Millisecond)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
