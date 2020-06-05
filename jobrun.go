@@ -81,7 +81,7 @@ func (p Parallel) Run(ctx context.Context) error {
 	if len(errs) > 0 {
 		return errs
 	}
-	if err := ctx.Err(); err == context.Canceled {
+	if err := ctx.Err(); errors.Is(err, context.Canceled) {
 		return err
 	}
 
