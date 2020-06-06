@@ -16,6 +16,9 @@ cover:
 	go test -coverprofile tmp/_cover.out ./...
 	go tool cover -html tmp/_cover.out -o tmp/cover.html
 
+.PHONY: checkall
+checkall: vet lint staticcheck
+
 .PHONY: vet
 vet:
 	go vet ./...
