@@ -24,6 +24,10 @@ vet:
 lint:
 	golint ./...
 
+.PHONY: staticcheck
+staticcheck:
+	staticcheck ./...
+
 .PHONY: clean
 clean:
 	go clean
