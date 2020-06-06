@@ -12,14 +12,14 @@ import (
 func TestSerial(t *testing.T) {
 	var jobs Serial
 	var stage int
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		if stage != 0 {
 			t.Fatalf("unexpected stage: want=0 got=%d", stage)
 		}
 		stage = 1
 		return nil
 	}))
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		if stage != 1 {
 			t.Fatalf("unexpected stage: want=1 got=%d", stage)
 		}
@@ -38,14 +38,14 @@ func TestSerial(t *testing.T) {
 func TestSerial_failure(t *testing.T) {
 	var jobs Serial
 	var stage int
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		if stage != 0 {
 			t.Fatalf("unexpected stage: want=0 got=%d", stage)
 		}
 		stage = 1
 		return nil
 	}))
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		if stage != 1 {
 			t.Fatalf("unexpected stage: want=1 got=%d", stage)
 		}
@@ -69,14 +69,14 @@ func TestSerial_cancel(t *testing.T) {
 	defer cancel()
 	var jobs Serial
 	var stage int
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		if stage != 0 {
 			t.Fatalf("unexpected stage: want=0 got=%d", stage)
 		}
 		stage = 1
 		return nil
 	}))
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		if stage != 1 {
 			t.Fatalf("unexpected stage: want=1 got=%d", stage)
 		}
@@ -99,7 +99,7 @@ func TestSerial_cancel(t *testing.T) {
 func TestParallel(t *testing.T) {
 	var jobs Parallel
 	var state1, state2 int32
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		atomic.StoreInt32(&state1, 1)
 		for atomic.LoadInt32(&state2) == 0 {
 			time.Sleep(time.Millisecond)
@@ -107,7 +107,7 @@ func TestParallel(t *testing.T) {
 		atomic.StoreInt32(&state1, 2)
 		return nil
 	}))
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		atomic.StoreInt32(&state2, 1)
 		for atomic.LoadInt32(&state1) == 0 {
 			time.Sleep(time.Millisecond)
@@ -127,7 +127,7 @@ func TestParallel(t *testing.T) {
 func TestParallel_failure(t *testing.T) {
 	var jobs Parallel
 	var state1, state2 int32
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		atomic.StoreInt32(&state1, 1)
 		for atomic.LoadInt32(&state2) == 0 {
 			time.Sleep(time.Millisecond)
@@ -135,7 +135,7 @@ func TestParallel_failure(t *testing.T) {
 		atomic.StoreInt32(&state1, 2)
 		return nil
 	}))
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		atomic.StoreInt32(&state2, 1)
 		for atomic.LoadInt32(&state1) == 0 {
 			time.Sleep(time.Millisecond)
@@ -161,7 +161,7 @@ func TestParallel_cancel(t *testing.T) {
 
 	var jobs Parallel
 	var state1, state2 int32
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		atomic.StoreInt32(&state1, 1)
 		for atomic.LoadInt32(&state2) == 0 {
 			time.Sleep(time.Millisecond)
@@ -176,7 +176,7 @@ func TestParallel_cancel(t *testing.T) {
 		}
 		return nil
 	}))
-	jobs.Add(RunFunc(func(ctx context.Context) error {
+	jobs.Add(RunnerFunc(func(ctx context.Context) error {
 		atomic.StoreInt32(&state2, 1)
 		for atomic.LoadInt32(&state1) == 0 {
 			time.Sleep(time.Millisecond)
