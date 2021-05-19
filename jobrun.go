@@ -38,10 +38,10 @@ func (s Serial) Run(ctx context.Context) error {
 	for i, r := range s {
 		err := r.Run(ctx)
 		if err != nil {
-			return serialError(i, err)
+			return serialError(i, name(r), err)
 		}
 		if err := ctx.Err(); err != nil {
-			return serialError(i, err)
+			return serialError(i, name(r), err)
 		}
 	}
 	return nil
@@ -75,7 +75,11 @@ func (p Parallel) Run(ctx context.Context) error {
 					return
 				}
 				mu.Lock()
-				errs = append(errs, parallelError{n: n, err: err})
+				errs = append(errs, parallelError{
+					n:    n,
+					name: name(r),
+					err:  err,
+				})
 				mu.Unlock()
 				cancel()
 			}
