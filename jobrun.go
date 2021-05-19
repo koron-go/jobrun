@@ -77,7 +77,7 @@ func (p Parallel) Run(ctx context.Context) error {
 				mu.Lock()
 				errs = append(errs, parallelError{
 					n:    n,
-					name: name(job),
+					name: name(r),
 					err:  err,
 				})
 				mu.Unlock()
