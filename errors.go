@@ -5,16 +5,23 @@ import (
 	"fmt"
 )
 
-func serialError(n int, err error) error {
+func serialError(n int, name string, err error) error {
+	if name != "" {
+		return fmt.Errorf("job:%s (serial job #%d) failed: %w", name, n, err)
+	}
 	return fmt.Errorf("serial job #%d failed: %w", n, err)
 }
 
 type parallelError struct {
-	n   int
-	err error
+	n    int
+	name string
+	err  error
 }
 
 func (pe parallelError) Error() string {
+	if pe.name != "" {
+		return fmt.Sprintf("job:%s (parallel job #%d) failed: %s", pe.name, pe.n, pe.err)
+	}
 	return fmt.Sprintf("parallel job #%d failed: %s", pe.n, pe.err)
 }
 

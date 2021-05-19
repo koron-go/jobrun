@@ -10,19 +10,37 @@ import (
 )
 
 func TestSerialError(t *testing.T) {
-	err := serialError(123, fmt.Errorf("hello world"))
+	// normal job
+	err := serialError(123, "", fmt.Errorf("hello world"))
 	if err.Error() != "serial job #123 failed: hello world" {
 		t.Fatal("unexpected Error()")
+	}
+
+	// named job
+	err = serialError(123, "foobar", fmt.Errorf("hello world"))
+	if got := err.Error(); got != "job:foobar (serial job #123) failed: hello world" {
+		t.Fatalf("unexpected Error(): got=%s", got)
 	}
 }
 
 func TestParallelErrors(t *testing.T) {
+	// normal job
 	err := parallelError{
 		n:   123,
 		err: fmt.Errorf("hello world"),
 	}
 	if err.Error() != "parallel job #123 failed: hello world" {
 		t.Fatal("unexpected Error()")
+	}
+
+	// named job
+	err = parallelError{
+		n:    123,
+		name: "foobar",
+		err:  fmt.Errorf("hello world"),
+	}
+	if got := err.Error(); got != "job:foobar (parallel job #123) failed: hello world" {
+		t.Fatalf("unexpected Error(): got=%s", got)
 	}
 }
 
